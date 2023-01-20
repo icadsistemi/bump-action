@@ -1,4 +1,4 @@
-name: 'Bump.sh'
+name: 'Bump.sh - IS Fork'
 description: 'Keep your public, private and partner API docs in sync with your code, whether you use OpenAPI or AsyncAPI.'
 inputs:
   file:
