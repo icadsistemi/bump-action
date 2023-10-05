@@ -36,6 +36,10 @@ If you only want to have API diff summary sent as a comment on your pull request
 ```yaml
 name: API diff
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   pull_request:
     branches:
@@ -43,11 +47,11 @@ on:
 
 jobs:
   api-diff:
-    name: Check API diff on Bump
+    name: Check API diff on Bump.sh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Comment pull request with API diff
         uses: bump-sh/github-action@v1
         with:
@@ -59,7 +63,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
 
-_Important: make sure to change your main destination branch name (`main` in the example above), replace `<BUMP_DOC_ID>` with your Bump documentation slug or id and change your api specification file path (`doc/api-documentation.yml` in the example above)._
+_Important: make sure to change your main destination branch name (`main` in the example above), replace `<BUMP_DOC_ID>` with your Bump.sh documentation slug or id and change your api specification file path (`doc/api-documentation.yml` in the example above)._
 
 ### API diff on pull requests & Deploy on push
 
@@ -79,14 +83,18 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   deploy-doc:
     if: ${{ github.event_name == 'push' }}
-    name: Deploy API documentation on Bump
+    name: Deploy API documentation on Bump.sh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Deploy API documentation
         uses: bump-sh/github-action@v1
         with:
@@ -96,11 +104,11 @@ jobs:
 
   api-diff:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Check API diff on Bump
+    name: Check API diff on Bump.sh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Comment pull request with API diff
         uses: bump-sh/github-action@v1
         with:
@@ -112,7 +120,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
 
-_Important: make sure to change your main destination branch name (`main` in the example above), replace `<BUMP_DOC_ID>` with your Bump documentation slug or id and change your api specification file path (`doc/api-documentation.yml` in the example above)._
+_Important: make sure to change your main destination branch name (`main` in the example above), replace `<BUMP_DOC_ID>` with your Bump.sh documentation slug or id and change your api specification file path (`doc/api-documentation.yml` in the example above)._
 
 ### Deploy on push
 
@@ -130,13 +138,13 @@ on:
 
 jobs:
   deploy-doc:
-    name: Deploy API doc on Bump
+    name: Deploy API doc on Bump.sh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Deploy API documentation
-        uses: bump-sh/github-action@0.3
+        uses: bump-sh/github-action@v1
         with:
           doc: <BUMP_DOC_ID>
           token: ${{secrets.BUMP_TOKEN}}
@@ -151,7 +159,7 @@ _Important: make sure to change your main destination branch name (`main` in the
 
 * `token` (required): Do not add your documentation token here, but create an [encrypted secret](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets) that holds your documentation token.
 
-  * Your Bump.sh token can be found in the documentation settings on https://bump.sh. Copy it for later usage.
+  * Your Bump.sh token can be found in the documentation settings on [your API dashboard](https://bump.sh/docs). Copy it for later usage.
   * In your GitHub repository, go to your “Settings”, and then “Secrets”.
   * Click the button “New repository secret”, name the secret `BUMP_TOKEN` and paste your Bump.sh token in the value field.
 
@@ -167,6 +175,10 @@ _Important: make sure to change your main destination branch name (`main` in the
   * `diff`: automatically comment your pull request with the API diff
   * `dry-run`: dry-run a deployment of the documentation file
   * `preview`: create a temporary preview
+
+* `expires` (optional): Specify a longer expiration date for **public diffs** (defaults to 1 day). Use iso8601 format to provide a date, or you can use `never` to keep the result live indefinitely.
+
+* `fail_on_breaking` (optional): Mark the action as failed when a breaking change is detected with the diff command. This is only valid with `diff` command.
 
 ## Contributing
 

@@ -19,6 +19,9 @@ jest.mock('bump-cli');
 const mockedDeploy = bump.Deploy as jest.Mocked<typeof bump.Deploy>;
 const mockedDiff = jest.mocked(bump.Diff, true);
 const mockedPreview = bump.Preview as jest.Mocked<typeof bump.Preview>;
+
+import * as core from '@actions/core';
+
 const diffExample: bump.DiffResponse = {
   id: 'hello-123',
   markdown: 'one',
@@ -148,6 +151,7 @@ test('test action run diff correctly', async () => {
     '',
     '',
     'markdown',
+    '',
   );
   expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
 });
@@ -182,6 +186,7 @@ test('test action run diff on existing documentation correctly', async () => {
     '',
     '',
     'markdown',
+    '',
   );
   expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
 });
@@ -214,6 +219,7 @@ test('test action run diff with Branch correctly', async () => {
     'latest',
     '',
     'markdown',
+    '',
   );
   expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
 });
@@ -241,11 +247,50 @@ test('test action run diff on PR correctly', async () => {
     '',
     '',
     'markdown',
+    '',
+  );
+  expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
+});
+
+test('test action run with breaking change diff', async () => {
+  const spyError = jest.spyOn(core, 'setFailed');
+
+  mockedDiff.prototype.run.mockResolvedValue(diffExample);
+  expect(mockedDiff.prototype.run).not.toHaveBeenCalled();
+  expect(mockedInternalDiff.run).not.toHaveBeenCalled();
+  mockedInternalDiff.run.mockResolvedValue();
+  mockedInternalRepo.prototype.getBaseFile.mockResolvedValue('my-base-file-to-diff.yml');
+
+  const restore = mockEnv({
+    INPUT_FILE: 'my-file-to-diff.yml',
+    INPUT_COMMAND: 'diff',
+    INPUT_FAIL_ON_BREAKING: 'true',
+  });
+
+  await main();
+
+  restore();
+
+  expect(spyError).toHaveBeenCalledWith(
+    expect.stringMatching('Failing due to a breaking change detected in your API diff.'),
+  );
+
+  expect(mockedDiff.prototype.run).toHaveBeenCalledWith(
+    'my-base-file-to-diff.yml',
+    'my-file-to-diff.yml',
+    expect.anything(),
+    expect.anything(),
+    expect.anything(),
+    expect.anything(),
+    'markdown',
+    expect.anything(),
   );
   expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
 });
 
 test('test action run diff with internal exception', async () => {
+  const spyError = jest.spyOn(core, 'setFailed');
+
   mockedDiff.prototype.run.mockResolvedValue(diffExample);
   expect(mockedDiff.prototype.run).not.toHaveBeenCalled();
   mockedInternalDiff.run.mockRejectedValue(new Error('Boom'));
@@ -260,6 +305,8 @@ test('test action run diff with internal exception', async () => {
 
   restore();
 
+  expect(spyError).toHaveBeenCalledWith('Boom');
+
   expect(mockedDiff.prototype.run).toHaveBeenCalledWith(
     'my-file-to-diff.yml',
     undefined,
@@ -268,6 +315,7 @@ test('test action run diff with internal exception', async () => {
     '',
     '',
     'markdown',
+    '',
   );
   expect(mockedInternalDiff.run).toHaveBeenCalledWith(diffExample, expect.any(Repo));
 });
